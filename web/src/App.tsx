@@ -18,6 +18,13 @@ export default function App() {
   const [content, setContent] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [apiBase, setApiBase] = useState<string>(() => {
+    try {
+      return localStorage.getItem('apiBase') || ''
+    } catch {
+      return ''
+    }
+  })
 
   const tree = useMemo(() => {
     const byId: Record<string, NodeWithChildren> = {}
@@ -61,6 +68,13 @@ export default function App() {
     loadAll()
   }, [])
 
+  useEffect(() => {
+    try {
+      if (apiBase) localStorage.setItem('apiBase', apiBase)
+      else localStorage.removeItem('apiBase')
+    } catch {}
+  }, [apiBase])
+
   const createComment = async (parentId: string, text: string) => {
     if (!text.trim()) return
   const created = await fetchJSON<NodeDTO>('/posts', {
@@ -76,6 +90,24 @@ export default function App() {
       <h1>Infinite Threads</h1>
       {loading && <p>読み込み中...</p>}
       {error && <p style={{ color: 'crimson' }}>{error}</p>}
+      <details style={{ margin: '8px 0 12px' }}>
+        <summary>設定</summary>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8 }}>
+          <label>
+            API Base:
+            <input
+              style={{ marginLeft: 8, width: 420 }}
+              placeholder="例: https://your-api.example.com/api"
+              value={apiBase}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setApiBase(e.target.value)}
+            />
+          </label>
+          <button onClick={() => window.location.reload()}>再読み込み</button>
+        </div>
+        <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+          クエリパラメータ ?api=... や localStorage('apiBase') で上書き可能です。
+        </div>
+      </details>
       <div style={{ display: 'flex', gap: 8 }}>
         <input
           placeholder="新規ポスト"

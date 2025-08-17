@@ -44,3 +44,12 @@ GET /api/posts/:postId/comments
 - API base can be set via `VITE_API_BASE` env when building (e.g., your hosted API URL).
 
 Workflow: `.github/workflows/deploy-pages.yml` will build `web/` and publish `web/dist` to Pages on push to main.
+
+### Production API connection
+- Set `VITE_API_BASE` in GitHub → repo → Settings → Secrets and variables → Actions (e.g. `https://your-api.example.com/api`).
+- Ensure backend CORS allows origin `https://<your-username>.github.io`.
+
+### Runtime override (for demo/testing)
+- You can override the API base at runtime:
+  - Query param: `?api=https://your-api.example.com/api`
+  - Or set `localStorage.setItem('apiBase', 'https://your-api.example.com/api')` then reload.
