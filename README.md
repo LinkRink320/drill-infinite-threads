@@ -37,3 +37,10 @@ GET /api/posts/:postId/comments
 ## Notes
 - Posts are stored in collection `posts` with shape: `{ _id, content, parentId, createdAt, updatedAt }`.
 - Indexes on `parentId` and `createdAt`.
+
+## Deploy: GitHub Pages (frontend only)
+- The web app can be deployed to GitHub Pages via Actions.
+- Vite is configured with `base: /drill-infinite-threads/`.
+- API base can be set via `VITE_API_BASE` env when building (e.g., your hosted API URL).
+
+Workflow: `.github/workflows/deploy-pages.yml` will build `web/` and publish `web/dist` to Pages on push to main.

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { fetchJSON } from './lib/api'
 
 type NodeDTO = {
   id: string
@@ -10,11 +11,7 @@ type NodeDTO = {
 
 type NodeWithChildren = NodeDTO & { children?: NodeWithChildren[] }
 
-async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, init)
-  if (!res.ok) throw new Error(await res.text())
-  return res.json()
-}
+// fetchJSON moved to lib/api
 
 export default function App() {
   const [posts, setPosts] = useState<NodeDTO[]>([])

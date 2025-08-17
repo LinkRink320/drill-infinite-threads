@@ -4,12 +4,16 @@ import fs from "fs";
 import dotenv from "dotenv";
 import postsRouter from "./routes/posts";
 import { connectMongo } from "./lib/db";
+import cors from "cors";
 
 dotenv.config();
 
 export function createApp() {
   const app = express();
   app.use(express.json());
+  if (process.env.CORS_ORIGIN) {
+    app.use(cors({ origin: process.env.CORS_ORIGIN }));
+  }
   app.use("/api/posts", postsRouter);
   // Serve frontend if built (web/dist)
   const distDir = path.resolve(__dirname, "../web/dist");
