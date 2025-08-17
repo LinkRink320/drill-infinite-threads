@@ -19,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -32,6 +34,8 @@ jobs:
           if [ -n "${{ vars.VITE_API_BASE }}" ]; then echo "VITE_API_BASE=${{ vars.VITE_API_BASE }}" >> .env.production; fi
           if [ -n "${{ secrets.VITE_API_BASE }}" ]; then echo "VITE_API_BASE=${{ secrets.VITE_API_BASE }}" >> .env.production; fi
           npm run build
+          # prevent Jekyll processing on Pages (ensures files like _* are served)
+          touch dist/.nojekyll
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
