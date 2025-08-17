@@ -19,6 +19,8 @@ async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
 export default function App() {
   const [posts, setPosts] = useState<NodeDTO[]>([])
   const [content, setContent] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const tree = useMemo(() => {
     const byId: Record<string, NodeWithChildren> = {}
@@ -41,18 +43,33 @@ export default function App() {
   }, [posts])
 
   useEffect(() => {
-    fetchJSON<NodeDTO[]>('/api/posts').then(setPosts).catch(console.error)
+    const loadAll = async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const roots = await fetchJSON<NodeDTO[]>('/api/posts')
+        const map = new Map<string, NodeDTO>()
+        roots.forEach(r => map.set(r.id, r))
+        for (const r of roots) {
+          const descendants = await fetchSubtree(r.id)
+          for (const d of descendants) map.set(d.id, d)
+        }
+        setPosts(Array.from(map.values()))
+      } catch (e: any) {
+        setError(e?.message || 'Failed to load')
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadAll()
   }, [])
 
-  const createPost = async (parentId?: string) => {
-    const text = prompt('内容を入力してください', '')
-    if (!text) return
-    const body: any = { content: text }
-    if (parentId) body.parentId = parentId
+  const createComment = async (parentId: string, text: string) => {
+    if (!text.trim()) return
     const created = await fetchJSON<NodeDTO>('/api/posts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ content: text, parentId }),
     })
     setPosts((prev: NodeDTO[]) => [...prev, created])
   }
@@ -60,6 +77,8 @@ export default function App() {
   return (
     <div style={{ maxWidth: 720, margin: '0 auto', padding: 16 }}>
       <h1>Infinite Threads</h1>
+      {loading && <p>読み込み中...</p>}
+      {error && <p style={{ color: 'crimson' }}>{error}</p>}
       <div style={{ display: 'flex', gap: 8 }}>
         <input
           placeholder="新規ポスト"
@@ -83,19 +102,19 @@ export default function App() {
         </button>
       </div>
 
-      <ThreadList nodes={tree} onReply={createPost} />
+      <ThreadList nodes={tree} onReply={createComment} />
     </div>
   )
 }
 
-function ThreadList({ nodes, onReply }: { nodes: NodeWithChildren[]; onReply: (parentId: string) => void }) {
+function ThreadList({ nodes, onReply }: { nodes: NodeWithChildren[]; onReply: (parentId: string, text: string) => void }) {
   return (
     <ul style={{ listStyle: 'none', paddingLeft: 16 }}>
       {nodes.map((n: NodeWithChildren) => (
         <li key={n.id} style={{ margin: '8px 0' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span>{n.content}</span>
-            <button onClick={() => onReply(n.id)}>返信</button>
+            <InlineReply parentId={n.id} onReply={onReply} />
           </div>
           {n.children && n.children.length > 0 && (
             <div style={{ borderLeft: '2px solid #ddd', marginLeft: 8, paddingLeft: 8 }}>
@@ -106,4 +125,47 @@ function ThreadList({ nodes, onReply }: { nodes: NodeWithChildren[]; onReply: (p
       ))}
     </ul>
   )
+}
+
+function InlineReply({ parentId, onReply }: { parentId: string; onReply: (parentId: string, text: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const [text, setText] = useState('')
+  return (
+    <div>
+      {!open ? (
+        <button onClick={() => setOpen(true)}>返信</button>
+      ) : (
+        <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+          <input
+            value={text}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setText(e.target.value)}
+            placeholder="コメントを追加"
+          />
+          <button
+            onClick={() => {
+              if (!text.trim()) return
+              onReply(parentId, text)
+              setText('')
+              setOpen(false)
+            }}
+          >
+            送信
+          </button>
+          <button onClick={() => setOpen(false)}>キャンセル</button>
+        </span>
+      )}
+    </div>
+  )
+}
+
+type PostWithComments = { post: NodeDTO; comments: NodeDTO[] }
+async function fetchSubtree(nodeId: string): Promise<NodeDTO[]> {
+  const { comments }: PostWithComments = await fetchJSON(`/api/posts/${nodeId}/comments`)
+  const acc: NodeDTO[] = []
+  for (const c of comments) {
+    acc.push(c)
+    const deeper = await fetchSubtree(c.id)
+    acc.push(...deeper)
+  }
+  return acc
 }
