@@ -53,3 +53,4 @@ Workflow: `.github/workflows/deploy-pages.yml` will build `web/` and publish `we
 - You can override the API base at runtime:
   - Query param: `?api=https://your-api.example.com/api`
   - Or set `localStorage.setItem('apiBase', 'https://your-api.example.com/api')` then reload.
+  - Demo mode: `?api=demo` でバックエンド無しの簡易データで動作（localStorageに保存）。
