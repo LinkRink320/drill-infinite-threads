@@ -30,6 +30,9 @@ jobs:
         working-directory: web
         run: |
           npm ci
+          # inject VITE_API_BASE from repo Variables or Secrets if provided
+          if [ -n "${{ vars.VITE_API_BASE }}" ]; then echo "VITE_API_BASE=${{ vars.VITE_API_BASE }}" >> .env.production; fi
+          if [ -n "${{ secrets.VITE_API_BASE }}" ]; then echo "VITE_API_BASE=${{ secrets.VITE_API_BASE }}" >> .env.production; fi
           npm run build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
