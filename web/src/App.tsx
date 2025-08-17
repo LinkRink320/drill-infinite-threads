@@ -44,7 +44,7 @@ export default function App() {
       setLoading(true)
       setError(null)
       try {
-        const roots = await fetchJSON<NodeDTO[]>('/api/posts')
+  const roots = await fetchJSON<NodeDTO[]>('/posts')
         const map = new Map<string, NodeDTO>()
         roots.forEach(r => map.set(r.id, r))
         for (const r of roots) {
@@ -63,7 +63,7 @@ export default function App() {
 
   const createComment = async (parentId: string, text: string) => {
     if (!text.trim()) return
-    const created = await fetchJSON<NodeDTO>('/api/posts', {
+  const created = await fetchJSON<NodeDTO>('/posts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content: text, parentId }),
@@ -86,7 +86,7 @@ export default function App() {
         <button
           onClick={async () => {
             if (!content.trim()) return
-            const created = await fetchJSON<NodeDTO>('/api/posts', {
+            const created = await fetchJSON<NodeDTO>('/posts', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ content }),
@@ -157,7 +157,7 @@ function InlineReply({ parentId, onReply }: { parentId: string; onReply: (parent
 
 type PostWithComments = { post: NodeDTO; comments: NodeDTO[] }
 async function fetchSubtree(nodeId: string): Promise<NodeDTO[]> {
-  const { comments }: PostWithComments = await fetchJSON(`/api/posts/${nodeId}/comments`)
+  const { comments }: PostWithComments = await fetchJSON(`/posts/${nodeId}/comments`)
   const acc: NodeDTO[] = []
   for (const c of comments) {
     acc.push(c)
